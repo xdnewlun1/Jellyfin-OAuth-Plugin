@@ -36,7 +36,11 @@ const ssoConfigLinking = {
       provider_config.setAttribute("data-id", provider_name);
 
       var label = document.createElement("label");
-      label.classList.add("inputLabel", "inputLabelUnfocused", "sso-provider-link-title");
+      label.classList.add(
+        "inputLabel",
+        "inputLabelUnfocused",
+        "sso-provider-link-title",
+      );
       label.textContent = provider_name;
 
       var addLink = document.createElement("a");
@@ -47,7 +51,9 @@ const ssoConfigLinking = {
       addLink.appendChild(addIcon);
 
       var existingLinksContainer = document.createElement("div");
-      existingLinksContainer.classList.add("sso-provider-existing-links-container");
+      existingLinksContainer.classList.add(
+        "sso-provider-existing-links-container",
+      );
       existingLinksContainer.setAttribute("data-provider", provider_name);
 
       provider_config.appendChild(label);
