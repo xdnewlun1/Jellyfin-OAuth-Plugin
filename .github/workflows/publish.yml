@@ -93,10 +93,25 @@ jobs:
           fi
 
           # Add the plugin zip to the manifest
-          # --url is the base URL; jprm appends the zip filename automatically
           for zip in _dist/*.zip; do
             jprm repo add --url "https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}" _manifest "$zip"
           done
+
+          # jprm inserts a plugin-name subdirectory in sourceUrl that doesn't exist
+          # in GitHub release asset URLs. Strip it out: .../tag/subdir/file.zip -> .../tag/file.zip
+          cd _manifest
+          python3 -c "
+          import json, re
+          with open('manifest.json', 'r') as f:
+              data = json.load(f)
+          for plugin in data:
+              for ver in plugin.get('versions', []):
+                  url = ver.get('sourceUrl', '')
+                  # Remove the extra subdirectory between the tag and the zip filename
+                  ver['sourceUrl'] = re.sub(r'(releases/download/[^/]+)/[^/]+/([^/]+\.zip)$', r'\1/\2', url)
+          with open('manifest.json', 'w') as f:
+              json.dump(data, f, indent=4)
+          "
 
           # Push updated manifest
           cd _manifest
