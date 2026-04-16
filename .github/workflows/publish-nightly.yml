@@ -1,0 +1,80 @@
+name: Publish Nightly
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build Dotnet
+        run: dotnet build --no-restore --warnaserror
+
+      - name: Test
+        run: dotnet test --no-build --verbosity normal
+
+      - name: Flag as nightly in build.yaml
+        uses: fjogeleit/yaml-update-action@v0.16.0
+        with:
+          valueFile: 'build.yaml'
+          propertyPath: 'version'
+          value: "0.0.0.9000"
+          commitChange: false
+          updateFile: true
+
+      - name: "JPRM: Build"
+        id: jprm
+        uses: oddstr13/jellyfin-plugin-repository-manager@v1.1.1
+        with:
+          version: "0.0.0.9000"
+          verbosity: debug
+          path: .
+          dotnet-target: "net9.0"
+          output: _dist
+
+      - name: Prepare release assets
+        run: |-
+          pushd _dist
+          for file in ./*.zip; do
+            md5sum ${file#./} >> ${file%.*}.md5
+            sha256sum ${file#./} >> ${file%.*}.sha256
+          done
+          ls -l
+          popd
+
+      - name: Publish nightly release
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: true
+          fail_on_unmatched_files: true
+          tag_name: nightly
+          files: |
+            _dist/*
+            build.yaml
+          body: |
+            Nightly build from the main branch.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish Plugin Manifest
+        uses: Kevinjil/jellyfin-plugin-repo-action@v0.2
+        with:
+          ignorePrereleases: true
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          pagesBranch: manifest-release
+          pagesFile: manifest.json
