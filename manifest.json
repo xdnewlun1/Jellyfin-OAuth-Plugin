@@ -1,21 +1,12 @@
 [
-    {
-        "category": "Authentication",
-        "description": "This plugin allows users to sign in through an SSO provider (such as Google, Facebook, or your own provider). This enables one-click signin.\nReview documentation at https://github.com/9p4/jellyfin-plugin-sso\n",
-        "guid": "505ce9d1-d916-42fa-86ca-673ef241d7df",
-        "name": "SSO Authentication",
-        "overview": "Authenticate users against an SSO provider.",
-        "owner": "xdnewlun1",
-        "imageUrl": "https://raw.githubusercontent.com/9p4/jellyfin-plugin-sso/main/img/logo.png",
-        "versions": [
-            {
-                "version": "4.1.0.0",
-                "changelog": "4.1.0.0: Security hardening - fix XSS, SSRF, CSRF, race conditions, SAML validation; add automated tests\n4.0.0.4: Fix security issue in SAML\n4.0.0.0: Jellyfin 10.11\n3.5.3.0: Allow for OID-provided avatars, various bugfixes and workarounds\n3.5.2.4: Updates for Jellyfin 10.9\n",
-                "targetAbi": "10.11.0.0",
-                "sourceUrl": "https://github.com/xdnewlun1/Jellyfin-OAuth-Plugin/releases/download/v4.1.0.0/sso-authentication/sso-authentication_4.1.0.0.zip",
-                "checksum": "472d21669ddbede5cc0686d26a71fe25",
-                "timestamp": "2026-04-16T05:06:01Z"
-            }
-        ]
-    }
+  {
+    "category": "Authentication",
+    "description": "This plugin allows users to sign in through an SSO provider (such as Google, Facebook, or your own provider). This enables one-click signin.\nReview documentation at https://github.com/9p4/jellyfin-plugin-sso\n",
+    "guid": "505ce9d1-d916-42fa-86ca-673ef241d7df",
+    "name": "SSO Authentication",
+    "overview": "Authenticate users against an SSO provider.",
+    "owner": "xdnewlun1",
+    "versions": [
+    ]
+  }
 ]
