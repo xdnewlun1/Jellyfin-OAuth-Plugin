@@ -75,19 +75,24 @@ jobs:
         run: |
           pip install --quiet jprm
 
-          # Clone or init the manifest branch
-          git clone --branch manifest-release "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git" _manifest 2>/dev/null || {
-            mkdir _manifest && cd _manifest && git init
+          # Clone the manifest branch, or create it fresh
+          if git clone --branch manifest-release "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git" _manifest 2>/dev/null; then
+            if [ ! -f _manifest/manifest.json ]; then
+              jprm repo init _manifest
+            fi
+          else
+            mkdir _manifest
+            jprm repo init _manifest
+            cd _manifest && git init
             git checkout --orphan manifest-release
-            echo '[]' > manifest.json
             git add manifest.json
             git -c user.name="github-actions" -c user.email="actions@github.com" commit -m "init manifest"
             git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
             git push -u origin manifest-release
             cd ..
-          }
+          fi
 
-          # Use JPRM to add/update the plugin in the manifest from the built zip
+          # Add the plugin zip to the manifest
           for zip in _dist/*.zip; do
             jprm repo add --url "https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/$(basename "$zip")" _manifest "$zip"
           done
