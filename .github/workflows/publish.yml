@@ -99,17 +99,15 @@ jobs:
 
           # jprm inserts a plugin-name subdirectory in sourceUrl that doesn't exist
           # in GitHub release asset URLs. Strip it out: .../tag/subdir/file.zip -> .../tag/file.zip
-          cd _manifest
           python3 -c "
           import json, re
-          with open('manifest.json', 'r') as f:
+          with open('_manifest/manifest.json', 'r') as f:
               data = json.load(f)
           for plugin in data:
               for ver in plugin.get('versions', []):
                   url = ver.get('sourceUrl', '')
-                  # Remove the extra subdirectory between the tag and the zip filename
                   ver['sourceUrl'] = re.sub(r'(releases/download/[^/]+)/[^/]+/([^/]+\.zip)$', r'\1/\2', url)
-          with open('manifest.json', 'w') as f:
+          with open('_manifest/manifest.json', 'w') as f:
               json.dump(data, f, indent=4)
           "
 
