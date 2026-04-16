@@ -93,8 +93,9 @@ jobs:
           fi
 
           # Add the plugin zip to the manifest
+          # --url is the base URL; jprm appends the zip filename automatically
           for zip in _dist/*.zip; do
-            jprm repo add --url "https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}/$(basename "$zip")" _manifest "$zip"
+            jprm repo add --url "https://github.com/${{ github.repository }}/releases/download/${RELEASE_TAG}" _manifest "$zip"
           done
 
           # Push updated manifest
