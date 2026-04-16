@@ -74,8 +74,8 @@ public class WebResponseTests
         // Non-ASCII domain should be converted to punycode
         var html = WebResponse.Generator("data", "prov", "https://jëllyfin.example.com", "OID");
 
-        // Should contain punycode-encoded domain
-        html.Should().Contain("xn--jllyfin-9xa.example.com");
+        // Should contain punycode-encoded domain (ë -> rya in punycode)
+        html.Should().Contain("xn--jllyfin-rya.example.com");
     }
 
     [Fact]
