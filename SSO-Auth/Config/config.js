@@ -254,6 +254,9 @@ const ssoConfigurationPage = {
           if (provider[id])
             ssoConfigurationPage.populateRoleMappings(provider[id], elem);
         });
+
+        // Load canonical links for this provider
+        ssoConfigurationPage.loadCanonicalLinks(page, provider_name);
       },
     );
   },
@@ -364,6 +367,148 @@ const ssoConfigurationPage = {
       ApiClient.getUrl("web/configurationpage") + "?name=SSO-Auth.css";
     view.appendChild(style);
   },
+  populateJellyfinUsers: (page) => {
+    return ApiClient.getJSON(ApiClient.getUrl("Users")).then((users) => {
+      const select = page.querySelector("#sso-new-link-jellyfin-user");
+      select.innerHTML = "";
+      users.forEach((user) => {
+        var option = document.createElement("option");
+        option.value = user.Id;
+        option.textContent = user.Name + " (" + user.Id + ")";
+        select.appendChild(option);
+      });
+      return users;
+    });
+  },
+  loadCanonicalLinks: (page, provider_name) => {
+    if (!provider_name) return;
+    ApiClient.getPluginConfiguration(ssoConfigurationPage.pluginUniqueId).then(
+      (config) => {
+        var provider = config.OidConfigs[provider_name] || {};
+        var links = provider.CanonicalLinks || {};
+        ssoConfigurationPage.renderCanonicalLinks(page, links, provider_name);
+      },
+    );
+    ssoConfigurationPage.populateJellyfinUsers(page);
+  },
+  renderCanonicalLinks: (page, links, provider_name) => {
+    const container = page.querySelector("#sso-canonical-links-list");
+    container.innerHTML = "";
+
+    var keys = Object.keys(links);
+    if (keys.length === 0) {
+      var empty = document.createElement("p");
+      empty.textContent = "No user mappings configured for this provider.";
+      empty.style.fontStyle = "italic";
+      container.appendChild(empty);
+      return;
+    }
+
+    var table = document.createElement("table");
+    table.style.width = "100%";
+    table.style.borderCollapse = "collapse";
+
+    var thead = document.createElement("thead");
+    var headerRow = document.createElement("tr");
+    ["SSO Username", "Jellyfin User ID", ""].forEach((text) => {
+      var th = document.createElement("th");
+      th.textContent = text;
+      th.style.textAlign = "left";
+      th.style.padding = "0.5em";
+      th.style.borderBottom = "1px solid #444";
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement("tbody");
+    keys.forEach((ssoUsername) => {
+      var row = document.createElement("tr");
+
+      var tdSso = document.createElement("td");
+      tdSso.textContent = ssoUsername;
+      tdSso.style.padding = "0.5em";
+      row.appendChild(tdSso);
+
+      var tdJf = document.createElement("td");
+      tdJf.textContent = links[ssoUsername];
+      tdJf.style.padding = "0.5em";
+      tdJf.style.fontFamily = "monospace";
+      tdJf.style.fontSize = "0.85em";
+      row.appendChild(tdJf);
+
+      var tdAction = document.createElement("td");
+      tdAction.style.padding = "0.5em";
+      var removeBtn = document.createElement("button");
+      removeBtn.setAttribute("is", "emby-button");
+      removeBtn.classList.add("raised", "button-delete", "emby-button");
+      removeBtn.textContent = "Remove";
+      removeBtn.addEventListener("click", () => {
+        if (
+          window.confirm("Remove mapping for SSO user '" + ssoUsername + "'?")
+        ) {
+          ssoConfigurationPage.removeCanonicalLink(
+            page,
+            provider_name,
+            ssoUsername,
+          );
+        }
+      });
+      tdAction.appendChild(removeBtn);
+      row.appendChild(tdAction);
+
+      tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+    container.appendChild(table);
+  },
+  addCanonicalLink: (page, provider_name, ssoUsername, jellyfinUserId) => {
+    if (!provider_name || !ssoUsername || !jellyfinUserId) {
+      Dashboard.alert(
+        "Please fill in both the SSO username and select a Jellyfin user.",
+      );
+      return;
+    }
+    ApiClient.getPluginConfiguration(ssoConfigurationPage.pluginUniqueId).then(
+      (config) => {
+        if (!config.OidConfigs[provider_name]) {
+          Dashboard.alert("Provider not found. Load a provider first.");
+          return;
+        }
+        if (!config.OidConfigs[provider_name].CanonicalLinks) {
+          config.OidConfigs[provider_name].CanonicalLinks = {};
+        }
+        config.OidConfigs[provider_name].CanonicalLinks[ssoUsername] =
+          jellyfinUserId;
+        ApiClient.updatePluginConfiguration(
+          ssoConfigurationPage.pluginUniqueId,
+          config,
+        ).then(() => {
+          Dashboard.alert("Mapping added.");
+          ssoConfigurationPage.loadCanonicalLinks(page, provider_name);
+        });
+      },
+    );
+  },
+  removeCanonicalLink: (page, provider_name, ssoUsername) => {
+    ApiClient.getPluginConfiguration(ssoConfigurationPage.pluginUniqueId).then(
+      (config) => {
+        if (
+          config.OidConfigs[provider_name] &&
+          config.OidConfigs[provider_name].CanonicalLinks
+        ) {
+          delete config.OidConfigs[provider_name].CanonicalLinks[ssoUsername];
+          ApiClient.updatePluginConfiguration(
+            ssoConfigurationPage.pluginUniqueId,
+            config,
+          ).then(() => {
+            Dashboard.alert("Mapping removed.");
+            ssoConfigurationPage.loadCanonicalLinks(page, provider_name);
+          });
+        }
+      },
+    );
+  },
 };
 
 export default function (view) {
@@ -407,6 +552,30 @@ export default function (view) {
     console.log(current_mappings);
     ssoConfigurationPage.populateRoleMappings(current_mappings, container);
   });
+
+  view.querySelector("#AddCanonicalLink").addEventListener("click", (e) => {
+    const provider_name = view.querySelector("#OidProviderName").value;
+    const ssoUsername = view
+      .querySelector("#sso-new-link-sso-username")
+      .value.trim();
+    const jellyfinUserId = view.querySelector(
+      "#sso-new-link-jellyfin-user",
+    ).value;
+
+    ssoConfigurationPage.addCanonicalLink(
+      view,
+      provider_name,
+      ssoUsername,
+      jellyfinUserId,
+    );
+
+    view.querySelector("#sso-new-link-sso-username").value = "";
+    e.preventDefault();
+    return false;
+  });
+
+  // Populate Jellyfin users dropdown on page load
+  ssoConfigurationPage.populateJellyfinUsers(view);
 
   view.querySelector("#sso-self-service-link").href =
     ApiClient.getUrl("/SSOViews/linking");

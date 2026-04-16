@@ -700,6 +700,80 @@
               </div>
             </div>
           </form>
+
+          <div
+            is="emby-collapse"
+            title="User Mappings (Canonical Links)"
+            class="verticalSection verticalSection-extrabottompadding"
+          >
+            <div class="collapseContent">
+              <p>
+                Map SSO usernames to existing Jellyfin users. This is required
+                when the SSO provider sends a different username than the
+                Jellyfin account name. Load a provider first, then manage its
+                mappings here.
+              </p>
+
+              <div id="sso-canonical-links-list"></div>
+
+              <div
+                class="inputContainer"
+                style="
+                  border: 1px solid #333;
+                  padding: 1em;
+                  margin-top: 1em;
+                  border-radius: 4px;
+                "
+              >
+                <h3 style="margin-top: 0">Add New Mapping</h3>
+                <div class="inputContainer">
+                  <label
+                    class="inputLabel inputLabelUnfocused"
+                    for="sso-new-link-sso-username"
+                    >SSO Username (from provider):</label
+                  >
+                  <input
+                    is="emby-input"
+                    id="sso-new-link-sso-username"
+                    type="text"
+                    placeholder="e.g. jsmith"
+                  />
+                  <div class="fieldDescription">
+                    The username that the SSO provider sends (usually the
+                    <code>preferred_username</code> claim).
+                  </div>
+                </div>
+                <div class="selectContainer">
+                  <label class="selectLabel" for="sso-new-link-jellyfin-user"
+                    >Jellyfin User:</label
+                  >
+                  <select
+                    is="emby-select"
+                    id="sso-new-link-jellyfin-user"
+                    class="emby-select-withcolor emby-select"
+                  ></select>
+                  <div class="selectArrowContainer">
+                    <div style="visibility: hidden; display: none">0</div>
+                    <span
+                      class="selectArrow material-icons keyboard_arrow_down"
+                      aria-hidden="true"
+                    ></span>
+                  </div>
+                  <div class="fieldDescription">
+                    The existing Jellyfin user to link this SSO identity to.
+                  </div>
+                </div>
+                <button
+                  id="AddCanonicalLink"
+                  is="emby-button"
+                  type="button"
+                  class="raised button-submit emby-button"
+                >
+                  <span>Add Mapping</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
