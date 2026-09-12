@@ -413,8 +413,9 @@ const sleep = (milliseconds) => {
     /// <param name="baseUrl">The base URL of the Jellyfin installation.</param>
     /// <param name="mode">The mode of the function; SAML or OID.</param>
     /// <param name="isLinking">Whether or not this request is to link accounts (Rather than authenticate).</param>
+    /// <param name="appVersion">The client version reported to the server for the session it creates. Falls back to "0.0.0.0" when not supplied.</param>
     /// <returns>A string with the HTML to serve to the client.</returns>
-    public static string Generator(string data, string provider, string baseUrl, string mode, bool isLinking = false)
+    public static string Generator(string data, string provider, string baseUrl, string mode, bool isLinking = false, string appVersion = null)
     {
         // Strip out the protocol (http:// or https://) and convert the domain to Punycode
         var idnMapping = new IdnMapping();
@@ -433,7 +434,8 @@ const sleep = (milliseconds) => {
             provider = provider,
             baseUrl = punycodeBaseUrl,
             mode = mode,
-            isLinking = isLinking
+            isLinking = isLinking,
+            appVersion = string.IsNullOrEmpty(appVersion) ? "0.0.0.0" : appVersion
         });
 
         return Base + @"
@@ -462,8 +464,10 @@ async function link(request) {
        xhr.setRequestHeader('Content-Type', 'application/json');
        xhr.setRequestHeader('Accept', 'application/json');
 
+       // Use the standard Authorization header: Jellyfin 12 ignores the legacy
+       // Emby-prefixed one unless EnableLegacyAuthorization is turned back on.
        xhr.setRequestHeader(
-           'X-Emby-Authorization',
+           'Authorization',
            `MediaBrowser Client=""${request.appName}"",Device=""${request.deviceName}"",DeviceId=""${request.deviceId}"",Version=""${request.appVersion}"",Token=""${jfToken}""`)
 
        xhr.onload = function(e) {
@@ -490,7 +494,8 @@ async function main() {
     }
     var deviceId = localStorage.getItem(""_deviceId2"");
     var appName = ""Jellyfin Web"";
-    var appVersion = ""10.8.0"";
+    // Reported by the server so the session is not labelled with a stale version.
+    var appVersion = ssoConfig.appVersion;
     var deviceName = getDeviceName();
 
     var request = {deviceId, appName, appVersion, deviceName, data};

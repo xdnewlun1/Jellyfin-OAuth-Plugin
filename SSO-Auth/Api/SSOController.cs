@@ -16,6 +16,7 @@ using Jellyfin.Database.Implementations.Enums;
 using Jellyfin.Plugin.SSO_Auth.Config;
 using Jellyfin.Plugin.SSO_Auth.Helpers;
 using MediaBrowser.Common.Api;
+using MediaBrowser.Controller;
 using MediaBrowser.Controller.Authentication;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Library;
@@ -49,6 +50,7 @@ public class SSOController : ControllerBase
     private readonly IProviderManager _providerManager;
     private readonly IServerConfigurationManager _serverConfigurationManager;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IServerApplicationHost _appHost;
     private static readonly ConcurrentDictionary<string, TimedAuthorizeState> StateManager = new ConcurrentDictionary<string, TimedAuthorizeState>();
     private static readonly HashSet<string> AllowedAvatarContentTypes = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -67,6 +69,7 @@ public class SSOController : ControllerBase
     /// <param name="providerManager">Instance of the <see cref="IProviderManager"/> interface.</param>
     /// <param name="httpClientFactory">Instance of the <see cref="IHttpClientFactory"/> interface.</param>
     /// <param name="serverConfigurationManager">Instance of the <see cref="IServerConfigurationManager"/> interface.</param>
+    /// <param name="appHost">Instance of the <see cref="IServerApplicationHost"/> interface.</param>
     public SSOController(
         ILogger<SSOController> logger,
         ILoggerFactory loggerFactory,
@@ -76,7 +79,8 @@ public class SSOController : ControllerBase
         ICryptoProvider cryptoProvider,
         IProviderManager providerManager,
         IHttpClientFactory httpClientFactory,
-        IServerConfigurationManager serverConfigurationManager)
+        IServerConfigurationManager serverConfigurationManager,
+        IServerApplicationHost appHost)
     {
         _sessionManager = sessionManager;
         _userManager = userManager;
@@ -87,6 +91,7 @@ public class SSOController : ControllerBase
         _providerManager = providerManager;
         _serverConfigurationManager = serverConfigurationManager;
         _httpClientFactory = httpClientFactory;
+        _appHost = appHost;
         _logger.LogInformation("SSO Controller initialized");
     }
 
@@ -349,7 +354,7 @@ public class SSOController : ControllerBase
             if (timedState.Valid)
             {
                 _logger.LogInformation("Is request linking: {IsLinking}", isLinking);
-                return Content(WebResponse.Generator(data: state, provider: provider, baseUrl: GetRequestBase(config.SchemeOverride, config.PortOverride), mode: "OID", isLinking: isLinking), MediaTypeNames.Text.Html);
+                return Content(WebResponse.Generator(data: state, provider: provider, baseUrl: GetRequestBase(config.SchemeOverride, config.PortOverride), mode: "OID", isLinking: isLinking, appVersion: _appHost.ApplicationVersionString), MediaTypeNames.Text.Html);
             }
             else
             {
@@ -670,7 +675,8 @@ public class SSOController : ControllerBase
                             provider: provider,
                             baseUrl: GetRequestBase(config.SchemeOverride, config.PortOverride),
                             mode: "SAML",
-                            isLinking: isLinking),
+                            isLinking: isLinking,
+                            appVersion: _appHost.ApplicationVersionString),
                         MediaTypeNames.Text.Html);
             }
 

@@ -1,9 +1,9 @@
 name: "SSO Authentication"
 guid: "505ce9d1-d916-42fa-86ca-673ef241d7df"
 imageUrl: "https://raw.githubusercontent.com/9p4/jellyfin-plugin-sso/main/img/logo.png"
-version: "4.1.1.0"
-targetAbi: "10.11.0.0"
-framework: "net9.0"
+version: "5.0.0.0"
+targetAbi: "12.0.0.0"
+framework: "net10.0"
 owner: "xdnewlun1"
 overview: "Authenticate users against an SSO provider."
 description: |
@@ -15,6 +15,10 @@ artifacts:
   - "Duende.IdentityModel.OidcClient.dll"
   - "Duende.IdentityModel.dll"
 changelog: |
+  5.0.0.0: Jellyfin 12 support (.NET 10, ABI 12.0.0.0); stop using the legacy
+    X-Emby-Authorization header, which Jellyfin 12 ignores by default; refresh the
+    bundled jellyfin-apiclient to 1.11.0; drop the vulnerable System.Security.Cryptography.Xml
+    package reference. Requires Jellyfin 12.0 or newer -- use 4.1.1.0 on Jellyfin 10.11.
   4.1.1.0: Add admin UI for user mappings (canonical links), fix apiClient device name stub, test infrastructure
   4.1.0.0: Security hardening - fix XSS, SSRF, CSRF, race conditions, SAML validation; add automated tests
   4.0.0.4: Fix security issue in SAML

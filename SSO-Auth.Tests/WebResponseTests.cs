@@ -79,6 +79,36 @@ public class WebResponseTests
     }
 
     [Fact]
+    public void Generator_UsesModernAuthorizationHeader()
+    {
+        var html = WebResponse.Generator("data", "prov", "https://example.com", "OID", isLinking: true);
+
+        // Jellyfin 12 ignores X-Emby-Authorization unless EnableLegacyAuthorization is set.
+        html.Should().NotContain("X-Emby-Authorization");
+        html.Should().Contain("'Authorization'");
+        html.Should().Contain("MediaBrowser Client=");
+    }
+
+    [Fact]
+    public void Generator_EmitsSuppliedAppVersion()
+    {
+        var html = WebResponse.Generator("data", "prov", "https://example.com", "OID", appVersion: "12.0.0");
+
+        html.Should().Contain("\"appVersion\":\"12.0.0\"");
+        html.Should().Contain("var appVersion = ssoConfig.appVersion;");
+    }
+
+    [Fact]
+    public void Generator_FallsBackWhenAppVersionMissing()
+    {
+        var html = WebResponse.Generator("data", "prov", "https://example.com", "OID");
+
+        html.Should().Contain("\"appVersion\":\"0.0.0.0\"");
+        // The old hardcoded stub must not come back.
+        html.Should().NotContain("10.8.0");
+    }
+
+    [Fact]
     public void Generator_ProducesValidHtml()
     {
         var html = WebResponse.Generator("data", "prov", "https://example.com", "OID");
